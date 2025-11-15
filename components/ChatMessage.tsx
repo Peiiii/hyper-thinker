@@ -20,16 +20,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, loadingMe
       return 'w-fit max-w-3xl px-3 py-1 rounded-lg shadow-md bg-purple-800/40';
     }
     
-    // AI messages
+    // AI error messages still get a distinct card style
     if (isError) {
       return 'w-full max-w-3xl p-4 rounded-lg shadow-md bg-red-900/50 border border-red-500';
     }
     
-    if (isAiLoadingPlaceholder) {
-      return 'w-full max-w-3xl p-4 rounded-lg shadow-md bg-gray-800/60';
-    }
-
-    // Regular AI response - no card
+    // For both loading placeholders and regular AI responses, use the flat style without a card background.
     return 'w-full max-w-3xl';
   };
 

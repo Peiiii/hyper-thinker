@@ -54,13 +54,7 @@ const App: React.FC = () => {
   }, []);
   
   useEffect(() => {
-    const container = chatContainerRef.current;
-    if (container) {
-      const isScrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 100;
-      if (isScrolledToBottom) {
-        scrollToBottom();
-      }
-    }
+    scrollToBottom();
   }, [currentMessages, isLoading, scrollToBottom]);
 
   const handleNewSession = useCallback(() => {

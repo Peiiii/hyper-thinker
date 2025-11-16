@@ -29,9 +29,8 @@ const PromptInput: React.FC<PromptInputProps> = ({ onSubmit, isLoading }) => {
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Ask a deep question..."
-        className="w-full p-3 pr-24 bg-gray-900/50 border border-gray-600/80 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-all resize-none disabled:opacity-50 placeholder-gray-500"
-        disabled={isLoading}
+        placeholder={isLoading ? "Bibo is thinking... (you can type your next prompt)" : "Ask a deep question..."}
+        className="w-full p-3 pr-24 bg-gray-900/50 border border-gray-600/80 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-all resize-none placeholder-gray-500"
         rows={1}
       />
       <button

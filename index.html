@@ -23,17 +23,22 @@
         font-family: 'IBM Plex Mono', monospace;
       }
       .brain-orbit {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 3.5rem; /* w-14 */
+        height: 3.5rem; /* h-14 */
         animation: orbit 30s linear infinite;
       }
       @keyframes orbit {
-        from { transform: rotate(0deg) translateX(130px) rotate(0deg); }
-        to   { transform: rotate(360deg) translateX(130px) rotate(-360deg); }
+        from { transform: translate(-50%, -50%) rotate(0deg) translateX(var(--orbit-radius, 100px)) rotate(0deg); }
+        to   { transform: translate(-50%, -50%) rotate(360deg) translateX(var(--orbit-radius, 100px)) rotate(-360deg); }
       }
-      .brain-orbit-2 { animation-delay: -5s; }
-      .brain-orbit-3 { animation-delay: -10s; }
-      .brain-orbit-4 { animation-delay: -15s; }
-      .brain-orbit-5 { animation-delay: -20s; }
-      .brain-orbit-6 { animation-delay: -25s; }
+      /* 5 brains, 30s duration -> 6s interval */
+      .brain-orbit-2 { animation-delay: -6s; }
+      .brain-orbit-3 { animation-delay: -12s; }
+      .brain-orbit-4 { animation-delay: -18s; }
+      .brain-orbit-5 { animation-delay: -24s; }
 
       /* Custom Scrollbar */
       ::-webkit-scrollbar {

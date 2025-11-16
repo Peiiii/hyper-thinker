@@ -1,5 +1,6 @@
 
 
+
 import React, { useRef, useEffect, useCallback } from 'react';
 import { BRAINS, COMPLEX_FLOW_STAGES, MEDIUM_FLOW_STAGES } from './constants';
 import BrainVisualizer from './components/BrainVisualizer';
@@ -156,7 +157,7 @@ const App: React.FC = () => {
             <div className="p-4 border-b border-gray-700/50 shrink-0">
               <h2 className="text-lg font-semibold text-gray-300">Bibo's Vitals</h2>
             </div>
-            <div className="h-80 shrink-0">
+            <div className="h-80 shrink-0 overflow-hidden">
               <BrainVisualizer brains={BRAINS} activeBrains={activeBrains} isLoading={isLoading} />
             </div>
             <div className="flex-grow overflow-y-auto p-4 border-t border-gray-700/50 space-y-8">

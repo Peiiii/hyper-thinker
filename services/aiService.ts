@@ -72,64 +72,50 @@ class AIService {
       userPrompt: string,
       promptWithHistory: string
     ): Promise<string> {
-        // === STAGE 1: DRAFTING ===
-        const stage1Title = "Step 1: Drafting the Core Answer";
-        const stage1Brains = [BrainType.Analyst, BrainType.Visionary];
-        this.onUpdate({ stage: stage1Title, data: null, brains: stage1Brains });
+        // A simplified flow for medium-complexity questions that need analysis and a structured response.
+        // It's much faster than the complex flow.
+
+        // === STAGE 1: ANALYSIS ===
+        const stage1Title = "Step 1: Analysis";
+        this.onUpdate({ stage: stage1Title, data: null, brains: [BrainType.Analyst] });
         
-        const stage1Executions: StageExecution[] = await Promise.all(
-            stage1Brains.map(async (brainId) => {
-                const brain = getBrain(brainId);
-                this.onUpdate({ stage: `${brain.name} is thinking...`, data: null, brains: [brain.id] });
-                const response = await this.provider.generateText({ quality: 'pro', systemInstruction: brain.systemInstruction, userPrompt: promptWithHistory, temperature: brain.temperature });
-                return { brainId, response };
-            })
-        );
-        let stage1Data: Stage = { title: stage1Title, executions: stage1Executions };
-        this.onUpdate({ stage: stage1Title, data: stage1Data });
-    
-        const stage1Combined = stage1Executions.map(e => `--- PERSPECTIVE FROM ${e.brainId.toUpperCase()} ---\n${e.response}\n`).join('\n');
-        const director = getBrain(BrainType.Director);
-        let currentText = await this.provider.generateText({
-            quality: 'pro',
-            systemInstruction: director.systemInstruction,
-            userPrompt: `Based on the user's prompt and these initial analyses, synthesize a coherent first draft.\n\n${stage1Combined}`,
-            temperature: director.temperature
+        const analystBrain = getBrain(BrainType.Analyst);
+        const analysis = await this.provider.generateText({ 
+            quality: 'pro', 
+            systemInstruction: analystBrain.systemInstruction, 
+            userPrompt: promptWithHistory, 
+            temperature: analystBrain.temperature 
         });
-        stage1Data.summary = { brainId: BrainType.Director, response: currentText };
-        this.onUpdate({ stage: "Writing First Draft...", data: stage1Data, brains: [BrainType.Director] });
+
+        const stage1Execution: StageExecution = { brainId: BrainType.Analyst, response: analysis };
+        const stage1Data: Stage = { title: stage1Title, executions: [stage1Execution] };
+        this.onUpdate({ stage: "Analyzing...", data: stage1Data, brains: [BrainType.Analyst] });
+
     
-        // === STAGE 2: REFINING ===
-        this.onUpdate({ stage: "Step 2: Refining the Draft", data: null, brains: [BrainType.Critic] });
-        const criticBrain = getBrain(BrainType.Critic); // Using Critic for a lighter review
-        const refinerBrain = getBrain(BrainType.Editor);
-        const critiquePrompt = `The original user prompt was: "${userPrompt}"\n\nReview the following text. Point out weaknesses, logical fallacies, and areas for improvement.\n\nText to review:\n\n${currentText}`;
-        const critique = await this.provider.generateText({ quality: 'pro', systemInstruction: criticBrain.systemInstruction, userPrompt: critiquePrompt, temperature: criticBrain.temperature });
-        this.onUpdate({ stage: `Critiquing the draft...`, data: { critique }, brains: [BrainType.Critic] });
-    
-        this.onUpdate({ stage: `Improving the draft...`, data: null, brains: [BrainType.Editor] });
-        const refinedText = await this.provider.generateText({
-          quality: 'pro',
-          systemInstruction: refinerBrain.systemInstruction,
-          userPrompt: `Original Text:\n"${currentText}"\n\nCritique:\n"${critique}"`,
-          temperature: refinerBrain.temperature
-        });
-        currentText = refinedText;
-        this.onUpdate({ stage: `Improving the draft...`, data: { critique, refinedText }, brains: [BrainType.Editor] });
-    
-        // === STAGE 3: WRITING THE FINAL ANSWER ===
-        this.onUpdate({ stage: "Step 3: Writing the Final Answer", data: null, brains: [BrainType.Writer] });
-        const communicatorBrain = getBrain(BrainType.Writer);
-        const communicatorPrompt = `---
+        // === STAGE 2: COMPOSITION ===
+        const stage2Title = "Step 2: Composition";
+        this.onUpdate({ stage: stage2Title, data: null, brains: [BrainType.Writer] });
+        const writerBrain = getBrain(BrainType.Writer);
+        const writerPrompt = `---
 ORIGINAL USER PROMPT:
 "${userPrompt}"
 ---
 KEY INSIGHTS (Use this as the primary source material for your response):
-"${currentText}"
+"${analysis}"
 ---
 `;
-        const finalResponse = await this.provider.generateText({ quality: 'pro', systemInstruction: communicatorBrain.systemInstruction, userPrompt: communicatorPrompt, temperature: communicatorBrain.temperature });
-        this.onUpdate({ stage: "Writing Final Answer...", data: { finalThesis: finalResponse }, brains: [BrainType.Writer] });
+        const finalResponse = await this.provider.generateText({ 
+            quality: 'pro', 
+            systemInstruction: writerBrain.systemInstruction, 
+            userPrompt: writerPrompt, 
+            temperature: writerBrain.temperature 
+        });
+        
+        const stage2Data: Stage = { 
+          title: stage2Title, 
+          executions: [{ brainId: BrainType.Writer, response: finalResponse }] 
+        };
+        this.onUpdate({ stage: "Composing final answer...", data: stage2Data, brains: [BrainType.Writer] });
     
         return finalResponse;
     }
@@ -209,15 +195,18 @@ KEY INSIGHTS (Use this as the primary source material for your response):
         this.onUpdate({ stage: "Writing First Draft...", data: stage3Data, brains: [BrainType.Director] });
     
         // === STAGE 4: REVIEWING & IMPROVING ===
+        const stage4Title = "Step 4: Reviewing & Improving";
+        const stage4Data: Stage = { title: stage4Title, executions: [] };
         const reviewerBrain = getBrain(BrainType.Skeptic);
         const refinerBrain = getBrain(BrainType.Editor);
         for (let i = 1; i <= 2; i++) {
-          this.onUpdate({ stage: `Reviewing & Improving (${i}/2)...`, data: null, brains: [BrainType.Skeptic] });
+          this.onUpdate({ stage: `${stage4Title} (${i}/2)...`, data: stage4Data, brains: [BrainType.Skeptic] });
           const critiquePrompt = `The original user prompt was: "${userPrompt}"\n\nBased on that, review the following text. Does it fully satisfy the user? Is it interesting, insightful, and not generic?\n\nText to review:\n\n${currentText}`;
           const critique = await this.provider.generateText({ quality: 'pro', systemInstruction: reviewerBrain.systemInstruction, userPrompt: critiquePrompt, temperature: reviewerBrain.temperature });
-          this.onUpdate({ stage: `Reviewing & Improving (${i}/2)...`, data: { critique }, brains: [BrainType.Skeptic] });
+          stage4Data.executions.push({ brainId: BrainType.Skeptic, response: critique });
+          this.onUpdate({ stage: `Critiquing (${i}/2)...`, data: stage4Data, brains: [BrainType.Skeptic] });
     
-          this.onUpdate({ stage: `Improving the draft (${i}/2)...`, data: null, brains: [BrainType.Editor] });
+          this.onUpdate({ stage: `Improving the draft (${i}/2)...`, data: stage4Data, brains: [BrainType.Editor] });
           const refinedText = await this.provider.generateText({
             quality: 'pro',
             systemInstruction: refinerBrain.systemInstruction,
@@ -225,11 +214,13 @@ KEY INSIGHTS (Use this as the primary source material for your response):
             temperature: refinerBrain.temperature
           });
           currentText = refinedText;
-          this.onUpdate({ stage: `Improving the draft (${i}/2)...`, data: { critique, refinedText }, brains: [BrainType.Editor] });
+          stage4Data.executions.push({ brainId: BrainType.Editor, response: refinedText });
+          this.onUpdate({ stage: `Refining (${i}/2)...`, data: stage4Data, brains: [BrainType.Editor] });
         }
     
         // === STAGE 5: WRITING THE FINAL ANSWER ===
-        this.onUpdate({ stage: "Step 5: Writing the Final Answer", data: null, brains: [BrainType.Writer] });
+        const stage5Title = "Step 5: Writing the Final Answer";
+        this.onUpdate({ stage: stage5Title, data: null, brains: [BrainType.Writer] });
         const communicatorBrain = getBrain(BrainType.Writer);
         const communicatorPrompt = `---
 ORIGINAL USER PROMPT:
@@ -240,7 +231,11 @@ KEY INSIGHTS (Use this as the primary source material for your response):
 ---
 `;
         const finalResponse = await this.provider.generateText({ quality: 'pro', systemInstruction: communicatorBrain.systemInstruction, userPrompt: communicatorPrompt, temperature: communicatorBrain.temperature });
-        this.onUpdate({ stage: "Writing Final Answer...", data: { finalThesis: finalResponse }, brains: [BrainType.Writer] });
+        const stage5Data: Stage = {
+          title: stage5Title,
+          executions: [{ brainId: BrainType.Writer, response: finalResponse }],
+        };
+        this.onUpdate({ stage: "Composing final answer...", data: stage5Data, brains: [BrainType.Writer] });
     
         return finalResponse;
     }

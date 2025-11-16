@@ -32,8 +32,6 @@ export class ChatManager {
       content: '',
       thinkingProcess: {
         stages: [],
-        reviewCycles: [],
-        finalThesis: '',
       },
     };
     
@@ -77,17 +75,6 @@ export class ChatManager {
             } else {
               tp.stages.push(stageData);
             }
-          } else if (update.data.critique) {
-             if (update.data.refinedText) {
-                const lastCycle = tp.reviewCycles[tp.reviewCycles.length - 1];
-                if (lastCycle && !lastCycle.refinedText) {
-                    lastCycle.refinedText = update.data.refinedText;
-                }
-             } else {
-                 tp.reviewCycles.push({critique: update.data.critique, refinedText: ''});
-             }
-          } else if (update.data.finalThesis) {
-            tp.finalThesis = update.data.finalThesis;
           }
         }
         return newMessages;
@@ -105,9 +92,6 @@ export class ChatManager {
          const lastMessage = newMessages[newMessages.length - 1];
          if (lastMessage && lastMessage.role === 'ai') {
            lastMessage.content = response;
-            if (lastMessage.thinkingProcess) {
-             lastMessage.thinkingProcess.finalThesis = response;
-           }
          }
          return newMessages;
       };

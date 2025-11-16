@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { ThinkingProcess, BrainType } from '../types';
+import { ThinkingProcess, BrainType, Stage } from '../types';
 import { ALL_BRAINS } from '../constants';
-import SimpleMarkdown from './SimpleMarkdown';
+import MarkdownDisplay from './MarkdownDisplay';
 
 interface ThinkingProcessDisplayProps {
   process: ThinkingProcess;
@@ -25,8 +25,8 @@ const BrainCard: React.FC<{ brainId: BrainType; response: string }> = ({ brainId
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
         </svg>
       </summary>
-      <div className="prose prose-sm prose-invert max-w-none opacity-80 font-mono p-3 pt-2 border-t border-gray-700/50">
-        <SimpleMarkdown text={response} />
+      <div className="p-3 pt-2 border-t border-gray-700/50">
+        <MarkdownDisplay text={response} className="prose prose-sm prose-invert max-w-none opacity-80" />
       </div>
     </details>
   );
@@ -39,7 +39,7 @@ const TimelineItem: React.FC<{ title: string; children: React.ReactNode; isLast?
       <div className="w-3 h-3 bg-cyan-400 rounded-full"></div>
     </div>
     <div className="mb-8">
-      <details>
+      <details open>
         <summary className="cursor-pointer font-bold text-base text-cyan-300 mb-2 list-none [&::-webkit-details-marker]:hidden flex justify-between items-center">
             <span>{title}</span>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 transform transition-transform duration-200 details-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -56,7 +56,7 @@ const TimelineItem: React.FC<{ title: string; children: React.ReactNode; isLast?
 
 
 const ThinkingProcessDisplay: React.FC<ThinkingProcessDisplayProps> = ({ process }) => {
-  const { stages, reviewCycles, finalThesis } = process;
+  const { stages } = process;
   const hasContent = stages.length > 0;
 
   if (!hasContent) {
@@ -69,11 +69,15 @@ const ThinkingProcessDisplay: React.FC<ThinkingProcessDisplayProps> = ({ process
         View Thinking Process
       </summary>
       <div className="mt-4 border-l-2 border-gray-800/50">
-        {stages.map((stage) => (
-          <TimelineItem key={stage.title} title={stage.title}>
+        {stages.map((stage, index) => (
+          <TimelineItem 
+            key={stage.title} 
+            title={stage.title}
+            isLast={index === stages.length - 1}
+          >
             <div className="space-y-2">
-              {stage.executions.map((exec) => (
-                <BrainCard key={`${stage.title}-${exec.brainId}`} brainId={exec.brainId} response={exec.response} />
+              {stage.executions.map((exec, idx) => (
+                <BrainCard key={`${stage.title}-${exec.brainId}-${idx}`} brainId={exec.brainId} response={exec.response} />
               ))}
               {stage.summary && (
                 <div className="pl-4 border-l-2 border-purple-500/50">
@@ -83,33 +87,6 @@ const ThinkingProcessDisplay: React.FC<ThinkingProcessDisplayProps> = ({ process
             </div>
           </TimelineItem>
         ))}
-
-        {reviewCycles.length > 0 && (
-          <TimelineItem title="Step 4: Reviewing & Improving">
-              {reviewCycles.map((cycle, index) => (
-                <div key={index} className="my-2">
-                  <details className="bg-black/10 rounded-md border border-gray-700/30">
-                      <summary className="cursor-pointer p-3 font-semibold text-gray-300 list-none [&::-webkit-details-marker]:hidden flex justify-between items-center">
-                          <span>Round {index + 1}</span>
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 transform transition-transform duration-200 details-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                          </svg>
-                      </summary>
-                      <div className="p-3 pt-0">
-                          <BrainCard brainId={BrainType.Skeptic} response={cycle.critique} />
-                          <BrainCard brainId={BrainType.Editor} response={cycle.refinedText} />
-                      </div>
-                  </details>
-                </div>
-              ))}
-          </TimelineItem>
-        )}
-        
-        {finalThesis && (
-          <TimelineItem title="Step 5: Writing the Final Answer" isLast={true}>
-            <BrainCard brainId={BrainType.Writer} response={finalThesis} />
-          </TimelineItem>
-        )}
       </div>
     </details>
   );

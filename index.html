@@ -5,10 +5,13 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bibo: The Hyper Thinker</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/11.9.0/styles/atom-one-dark.min.css">
+    
     <style>
       body {
         font-family: 'Inter', sans-serif;
@@ -52,7 +55,145 @@
       details[open] > summary .details-arrow {
         transform: rotate(180deg);
       }
+
+      /* Custom Markdown Styles */
+      .prose {
+        --tw-prose-links: theme(colors.cyan[400]);
+        --tw-prose-code: theme(colors.pink[400]);
+        --tw-prose-invert-bullets: theme(colors.cyan[400]);
+      }
+      .prose code::before, .prose code::after {
+        content: "" !important; /* Disables the default backticks for inline code */
+      }
+      .prose code {
+          font-weight: 500;
+          background-color: rgba(148, 163, 184, 0.1);
+          padding: 0.15em 0.3em;
+          border-radius: 0.25rem;
+      }
+      /* Overrides for code blocks rendered by highlight.js */
+      .prose pre {
+        background-color: #1e293b; /* slate-800 */
+        border-radius: 0.5rem;
+        border: 1px solid #334155; /* slate-700 */
+        padding: 0;
+        margin-top: 1em;
+        margin-bottom: 1em;
+      }
+      .prose pre code.hljs {
+          padding: 1rem;
+          font-size: 0.9em;
+          border-radius: 0.5rem;
+          background-color: transparent;
+      }
+      
+      /* Enhanced Markdown Styles */
+      .prose blockquote {
+        border-left-color: theme(colors.cyan[400]);
+        background-color: rgba(100, 116, 139, 0.1); /* slate-500 with 10% opacity */
+        font-style: normal;
+        color: theme(colors.slate[300]);
+        padding: 0.5em 1em;
+        margin: 1em 0;
+      }
+      .prose blockquote p:first-of-type::before { content: none; }
+      .prose blockquote p:last-of-type::after { content: none; }
+
+      .prose table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1em;
+        margin-bottom: 1em;
+      }
+      .prose thead {
+        border-bottom: 2px solid theme(colors.slate[600]);
+      }
+      .prose th {
+        padding: 0.5rem 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        color: theme(colors.slate[200]);
+      }
+      .prose tbody tr {
+        border-bottom: 1px solid theme(colors.slate[700]);
+      }
+      .prose tbody tr:nth-child(even) {
+        background-color: rgba(100, 116, 139, 0.05); /* slate-500 with 5% opacity */
+      }
+      .prose tbody tr:last-child {
+        border-bottom: none;
+      }
+      .prose td {
+        padding: 0.5rem 0.75rem;
+        vertical-align: top;
+      }
+
+      .prose a {
+        text-decoration: none;
+        border-bottom: 1px solid theme(colors.cyan[800]);
+        transition: all 0.2s ease-in-out;
+      }
+      .prose a:hover {
+        background-color: theme(colors.cyan[400] / 0.1);
+        border-bottom-color: theme(colors.cyan[400]);
+      }
+      .prose a.external-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.2em;
+      }
+      .prose a.external-link svg {
+        width: 0.9em;
+        height: 0.9em;
+        display: inline-block;
+      }
+
+      .prose img {
+        border-radius: 0.5rem;
+        border: 1px solid theme(colors.slate[700]);
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        margin-top: 1em;
+        margin-bottom: 1em;
+      }
+      
+      .prose hr {
+        border-color: theme(colors.slate[700]);
+        border-top-width: 1px;
+        margin-top: 1.5em;
+        margin-bottom: 1.5em;
+      }
+
+      /* Compact Prose Overrides */
+      .prose h2 {
+        margin-top: 1.5em;
+        margin-bottom: 0.75em;
+      }
+      .prose h3 {
+        margin-top: 1.25em;
+        margin-bottom: 0.5em;
+      }
+      .prose p, .prose ul, .prose ol, .prose dl {
+        margin-top: 0.75em;
+        margin-bottom: 0.75em;
+      }
+      .prose li {
+        margin-top: 0.2em;
+        margin-bottom: 0.2em;
+      }
+       .prose li > p {
+        margin-top: 0.4em;
+        margin-bottom: 0.4em;
+      }
+      .prose > :first-child {
+        margin-top: 0;
+      }
+      .prose > :last-child {
+        margin-bottom: 0;
+      }
     </style>
+  <script src="https://cdn.jsdelivr.net/npm/marked@13.0.0/lib/marked.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.11/dist/purify.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script type="importmap">
 {
   "imports": {

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ChatMessage, BrainType, Stage, ReviewRefineCycle } from '../types';
+import { ChatMessage, BrainType, Stage } from '../types';
 
 interface ChatState {
   currentMessages: ChatMessage[];

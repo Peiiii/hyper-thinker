@@ -34,15 +34,8 @@ export interface Stage {
   summary?: StageExecution;
 }
 
-export interface ReviewRefineCycle {
-  critique: string;
-  refinedText: string;
-}
-
 export interface ThinkingProcess {
   stages: Stage[];
-  reviewCycles: ReviewRefineCycle[];
-  finalThesis: string;
 }
 
 export interface ChatMessage {

@@ -1,6 +1,6 @@
 import React from 'react';
 import { ChatMessage as ChatMessageType } from '../types';
-import SimpleMarkdown from './SimpleMarkdown';
+import MarkdownDisplay from './MarkdownDisplay';
 import ThinkingProcessDisplay from './ThinkingProcessDisplay';
 
 interface ChatMessageProps {
@@ -13,7 +13,8 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, loadingMe
   const { role, content, thinkingProcess, isError } = message;
   const isUser = role === 'user';
   const isAiLoadingPlaceholder = role === 'ai' && isLoading && !content;
-  const hasThinkingSteps = thinkingProcess && (thinkingProcess.stages.length > 0 || thinkingProcess.reviewCycles.length > 0);
+  // FIX: The property 'reviewCycles' does not exist on type 'ThinkingProcess'. This was likely removed during a refactor.
+  const hasThinkingSteps = thinkingProcess && thinkingProcess.stages.length > 0;
 
   const getContainerClassName = () => {
     if (isUser) {
@@ -40,9 +41,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isLoading, loadingMe
             <span className="text-sm font-medium animate-pulse">{loadingMessage}</span>
           </div>
         ) : (
-          <div className="prose prose-invert prose-lg max-w-none leading-relaxed">
-            <SimpleMarkdown text={content} />
-          </div>
+          <MarkdownDisplay text={content} className="prose prose-invert max-w-none leading-normal" />
         )}
         {role === 'ai' && hasThinkingSteps && (
             <ThinkingProcessDisplay process={thinkingProcess} />

@@ -1,6 +1,3 @@
-
-
-
 import React, { useRef, useState, useLayoutEffect } from 'react';
 import { Brain, BrainType } from '../types';
 
@@ -23,7 +20,7 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brains, activeBrains,
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
         const brainSize = 56; // w-14 or 3.5rem
-        const padding = 20; // Space from the edge
+        const padding = 8; // Reduced padding to increase orbit radius
         // Calculate radius to be half of the smaller dimension, minus half a brain and padding
         const newRadius = Math.max(50, (Math.min(width, height) / 2) - (brainSize / 2) - padding);
         setRadius(newRadius);

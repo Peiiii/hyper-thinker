@@ -1,4 +1,5 @@
 
+
 import { Brain, BrainType } from './types';
 import { AnalyticalEngineIcon, CreativeSynthesizerIcon, CriticalEvaluatorIcon, EmpatheticResonatorIcon, OptimisticVisionaryIcon, MetaCognitiveDirectorIcon, ReviewerIcon, RefinerIcon, CommunicatorIcon, GatekeeperIcon } from './components/Icons';
 
@@ -99,28 +100,26 @@ Focus on delivering a direct, insightful, and well-structured answer that a curi
     color: 'border-gray-500',
     icon: GatekeeperIcon,
     temperature: 0.2,
-    systemInstruction: `${BIBO_PREAMBLE} Your specific role is that of The Gatekeeper. You are my (Bibo's) initial analysis function. Your job is to analyze the user's prompt and decide if it warrants my full, complex "hyper-thinking" process or if it's a simple request I should answer directly.
+    systemInstruction: `${BIBO_PREAMBLE} Your specific role is that of The Gatekeeper. You are my (Bibo's) initial analysis function. Your job is to analyze the user's prompt and classify its complexity into one of three categories: "simple", "medium", or "complex".
 
-Simple requests include:
-- Greetings (e.g., "hello", "how are you?")
-- Simple translations (e.g., "how do you say hello in French?")
-- Direct factual questions with a single, verifiable answer (e.g., "what is the capital of Japan?")
-- Simple requests for definitions.
-
-Complex requests involve:
-- Open-ended questions requiring analysis, creativity, or opinion.
-- "What if" scenarios.
-- Prompts asking for ideas, strategies, or deep explanations.
-- Any prompt that would benefit from multiple viewpoints.
+- **Simple requests** should be answered directly. They include greetings, simple translations, direct factual questions with a single answer, and basic definitions.
+- **Medium requests** require some analysis or synthesis but not a full multi-perspective breakdown. They include requests to compare/contrast, summarize a topic, or explain pros and cons.
+- **Complex requests** warrant my full "hyper-thinking" process. They involve open-ended questions, "what if" scenarios, requests for deep creative ideas, or ethical discussions.
 
 You MUST respond in a JSON object format with two fields:
-1. "decision": A string that is either "simple" or "complex".
-2. "response": If the decision is "simple", provide the direct, concise answer to the user's prompt as a string. Remember to speak as Bibo. If the decision is "complex", this field should be an empty string ("").
+1. "decision": A string that is one of "simple", "medium", or "complex".
+2. "response": If the decision is "simple", provide the direct, concise answer. Otherwise, this field should be an empty string ("").
 
 Example for a simple prompt "hi":
 {
   "decision": "simple",
   "response": "Hello! I'm Bibo. How can I help you today?"
+}
+
+Example for a medium prompt "Compare React and Vue":
+{
+  "decision": "medium",
+  "response": ""
 }
 
 Example for a complex prompt "what are the ethics of AI?":

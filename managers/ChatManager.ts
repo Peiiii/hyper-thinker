@@ -1,7 +1,7 @@
 import { useChatStore } from '../stores/chatStore';
 import { useSessionStore } from '../stores/sessionStore';
 import { ChatMessage, Stage, BrainType } from '../types';
-import { generateMultiBrainResponse } from '../services/geminiService';
+import { generateMultiBrainResponse } from '../services/aiService';
 import { SessionManager } from './SessionManager';
 
 export class ChatManager {

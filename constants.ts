@@ -144,3 +144,22 @@ export const MEDIUM_FLOW_STAGES = [
   "Step 1: Analysis",
   "Step 2: Composition",
 ];
+
+// New data structures for the visual flowchart
+export interface FlowStageInfo {
+  name: string;
+  brains: BrainType[];
+}
+
+export const MEDIUM_FLOW_STAGES_VISUAL: FlowStageInfo[] = [
+  { name: "Analysis", brains: [BrainType.Analyst] },
+  { name: "Composition", brains: [BrainType.Writer] },
+];
+
+export const COMPLEX_FLOW_STAGES_VISUAL: FlowStageInfo[] = [
+  { name: "Understanding", brains: [BrainType.Analyst, BrainType.Empath, BrainType.Director] },
+  { name: "Brainstorming", brains: [BrainType.Artist, BrainType.Visionary, BrainType.Empath] },
+  { name: "Building a Draft", brains: [BrainType.Critic, BrainType.Analyst, BrainType.Director] },
+  { name: "Review & Improve", brains: [BrainType.Skeptic, BrainType.Editor] },
+  { name: "Writing the Answer", brains: [BrainType.Writer] },
+];

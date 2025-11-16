@@ -1,3 +1,5 @@
+
+
 import React, { useRef, useEffect, useCallback } from 'react';
 import { BRAINS, COMPLEX_FLOW_STAGES, MEDIUM_FLOW_STAGES } from './constants';
 import BrainVisualizer from './components/BrainVisualizer';
@@ -5,6 +7,8 @@ import PromptInput from './components/PromptInput';
 import ChatMessage from './components/ChatMessage';
 import { GithubIcon, PlusIcon, MenuIcon, VitalsIcon, TrashIcon } from './components/Icons';
 import ThinkingProgress from './components/ThinkingProgress';
+import BrainDirectory from './components/BrainDirectory';
+import FlowDirectory from './components/FlowDirectory';
 
 import { usePresenter } from './hooks/usePresenter';
 import { useSessionStore } from './stores/sessionStore';
@@ -49,7 +53,7 @@ const App: React.FC = () => {
   return (
     <div className="bg-gray-900/50 text-gray-200 h-screen flex flex-col lg:flex-row overflow-hidden">
       {/* Left Sidebar */}
-      <aside className={`fixed top-0 left-0 h-full w-64 bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 flex flex-col p-4 z-30 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed top-0 left-0 h-full w-64 lg:w-80 bg-gray-900/95 backdrop-blur-sm border-r border-gray-700/50 flex flex-col p-4 z-30 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isLeftSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="hidden lg:flex flex-col items-start mb-6 shrink-0">
           <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
             Bibo
@@ -144,14 +148,20 @@ const App: React.FC = () => {
       </div>
 
       {/* Right Dashboard */}
-      <aside className={`fixed top-0 right-0 h-full w-80 bg-gray-900/95 backdrop-blur-sm border-l border-gray-700/50 flex flex-col z-30 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      <aside className={`fixed top-0 right-0 h-full w-80 lg:w-96 bg-gray-900/95 backdrop-blur-sm border-l border-gray-700/50 flex flex-col z-30 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         {isLoading && flowType ? (
           <ThinkingProgress stages={getThinkingStages()} currentStage={loadingMessage} />
         ) : (
           <>
-            <div className="p-4"><h2 className="text-lg font-semibold text-gray-300">Thinking Status</h2></div>
-            <div className="flex-grow flex items-center justify-center">
+            <div className="p-4 border-b border-gray-700/50 shrink-0">
+              <h2 className="text-lg font-semibold text-gray-300">Bibo's Vitals</h2>
+            </div>
+            <div className="h-80 shrink-0">
               <BrainVisualizer brains={BRAINS} activeBrains={activeBrains} isLoading={isLoading} />
+            </div>
+            <div className="flex-grow overflow-y-auto p-4 border-t border-gray-700/50 space-y-8">
+              <FlowDirectory />
+              <BrainDirectory />
             </div>
           </>
         )}

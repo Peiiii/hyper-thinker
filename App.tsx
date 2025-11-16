@@ -1,50 +1,23 @@
-
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { BrainType, ChatMessage as ChatMessageType, Stage, Session } from './types';
-import { generateMultiBrainResponse } from './services/geminiService';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { BRAINS } from './constants';
 import BrainVisualizer from './components/BrainVisualizer';
 import PromptInput from './components/PromptInput';
 import ChatMessage from './components/ChatMessage';
 import { GithubIcon, PlusIcon, MenuIcon, VitalsIcon, TrashIcon } from './components/Icons';
 
+import { usePresenter } from './hooks/usePresenter';
+import { useSessionStore } from './stores/sessionStore';
+import { useChatStore } from './stores/chatStore';
+import { useUiStore } from './stores/uiStore';
+
 const App: React.FC = () => {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [currentMessages, setCurrentMessages] = useState<ChatMessageType[]>([]);
-  
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loadingMessage, setLoadingMessage] = useState('');
-  const [activeBrains, setActiveBrains] = useState<BrainType[]>([]);
-  const [isLeftSidebarOpen, setIsLeftSidebarOpen] = useState(false);
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+  const presenter = usePresenter();
+  const { sessions, activeSessionId } = useSessionStore();
+  const { currentMessages, isLoading, loadingMessage, activeBrains } = useChatStore();
+  const { isLeftSidebarOpen, isRightSidebarOpen } = useUiStore();
+  const { setLeftSidebarOpen, setRightSidebarOpen } = useUiStore(state => state.actions);
+
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const activeSessionIdRef = useRef(activeSessionId);
-
-  useEffect(() => {
-    activeSessionIdRef.current = activeSessionId;
-  }, [activeSessionId]);
-
-  useEffect(() => {
-    try {
-      const storedSessions = localStorage.getItem('BiboSessions');
-      if (storedSessions) {
-        setSessions(JSON.parse(storedSessions));
-      }
-    } catch (error) {
-      console.error("Failed to parse sessions from localStorage", error);
-      localStorage.removeItem('BiboSessions');
-    }
-  }, []);
-
-  useEffect(() => {
-    if (sessions.length > 0) {
-      localStorage.setItem('BiboSessions', JSON.stringify(sessions));
-    } else {
-       localStorage.removeItem('BiboSessions');
-    }
-  }, [sessions]);
-  
 
   const scrollToBottom = useCallback(() => {
     chatContainerRef.current?.scrollTo({
@@ -57,187 +30,14 @@ const App: React.FC = () => {
     scrollToBottom();
   }, [currentMessages, isLoading, scrollToBottom]);
 
-  const handleNewSession = useCallback(() => {
-    setActiveSessionId(null);
-    setCurrentMessages([]);
-    setIsLoading(false);
-    setLoadingMessage('');
-    setActiveBrains([]);
-    if (window.innerWidth < 1024) {
-      setIsLeftSidebarOpen(false);
-    }
-  }, []);
+  const handleSelectSession = (sessionId: string) => {
+    presenter.sessionManager.selectSession(sessionId);
+  }
 
-  const handleSelectSession = useCallback((sessionId: string) => {
-    const session = sessions.find(s => s.id === sessionId);
-    if (session) {
-      setActiveSessionId(sessionId);
-      setCurrentMessages(session.messages);
-      setIsLoading(false);
-      setLoadingMessage('');
-      setActiveBrains([]);
-       if (window.innerWidth < 1024) {
-        setIsLeftSidebarOpen(false);
-      }
-    }
-  }, [sessions]);
-
-  const handleDeleteSession = useCallback((e: React.MouseEvent, sessionId: string) => {
-      e.stopPropagation();
-      setSessions(prev => prev.filter(s => s.id !== sessionId));
-      if (activeSessionId === sessionId) {
-          handleNewSession();
-      }
-  }, [activeSessionId, handleNewSession]);
-
-  const handleSendMessage = useCallback(async (prompt: string) => {
-    if (!prompt.trim() || isLoading) {
-      return;
-    }
-
-    let sessionIdToUpdate = activeSessionId;
-    const isNewSession = !sessionIdToUpdate;
-
-    const userMessage: ChatMessageType = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: prompt,
-    };
-
-    const aiMessagePlaceholder: ChatMessageType = {
-      id: (Date.now() + 1).toString(),
-      role: 'ai',
-      content: '',
-      thinkingProcess: {
-        stages: [],
-        reviewCycles: [],
-        finalThesis: '',
-      },
-    };
-
-    const messagesForApi = [...currentMessages, userMessage];
-    setCurrentMessages(prev => [...prev, userMessage, aiMessagePlaceholder]);
-
-    if (isNewSession) {
-        const newSessionId = `session_${Date.now()}`;
-        sessionIdToUpdate = newSessionId;
-        const newSession: Session = {
-            id: newSessionId,
-            title: prompt.substring(0, 40) + (prompt.length > 40 ? '...' : ''),
-            messages: [userMessage, aiMessagePlaceholder]
-        };
-        setSessions(prev => [newSession, ...prev]);
-        setActiveSessionId(newSessionId);
-    } else {
-        setSessions(prev => 
-            prev.map(s => 
-                s.id === sessionIdToUpdate 
-                    ? { ...s, messages: [...s.messages, userMessage, aiMessagePlaceholder] }
-                    : s
-            )
-        );
-    }
-    
-    setIsLoading(true);
-    setLoadingMessage('Waking up Bibo...');
-    setActiveBrains([]);
-    
-    const onUpdate = (update: { stage: string; data: any; brains?: BrainType[] }) => {
-      // Only update the UI if the user is still viewing the session being processed
-      if (activeSessionIdRef.current === sessionIdToUpdate) {
-        setLoadingMessage(update.stage);
-        if (update.brains) {
-          setActiveBrains(update.brains);
-        }
-      }
-
-      if (!update.data) {
-        return;
-      }
-
-      const messageUpdater = (messages: ChatMessageType[]): ChatMessageType[] => {
-        const newMessages = JSON.parse(JSON.stringify(messages));
-        const lastMessage = newMessages[newMessages.length - 1];
-        if (lastMessage && lastMessage.role === 'ai' && lastMessage.thinkingProcess) {
-          const tp = lastMessage.thinkingProcess;
-          if (update.data.title && Array.isArray(update.data.executions)) {
-            const stageData = update.data as Stage;
-            const existingStageIndex = tp.stages.findIndex(s => s.title === stageData.title);
-            if (existingStageIndex > -1) {
-              tp.stages[existingStageIndex] = { ...tp.stages[existingStageIndex], ...stageData };
-            } else {
-              tp.stages.push(stageData);
-            }
-          } else if (update.data.critique) {
-             if (update.data.refinedText) {
-                const lastCycle = tp.reviewCycles[tp.reviewCycles.length - 1];
-                if (lastCycle && !lastCycle.refinedText) {
-                    lastCycle.refinedText = update.data.refinedText;
-                }
-             } else {
-                 tp.reviewCycles.push({critique: update.data.critique, refinedText: ''});
-             }
-          } else if (update.data.finalThesis) {
-            tp.finalThesis = update.data.finalThesis;
-          }
-        }
-        return newMessages;
-      }
-      
-      // Always update the canonical session data in the background
-      setSessions(prev => prev.map(s => s.id === sessionIdToUpdate ? { ...s, messages: messageUpdater(s.messages) } : s));
-
-      // Conditionally update the displayed messages
-      if (activeSessionIdRef.current === sessionIdToUpdate) {
-        setCurrentMessages(prev => messageUpdater(prev));
-      }
-    };
-
-    try {
-      const response = await generateMultiBrainResponse(prompt, messagesForApi, onUpdate);
-
-      const finalUpdater = (messages: ChatMessageType[]): ChatMessageType[] => {
-         const newMessages = [...messages];
-         const lastMessage = newMessages[newMessages.length - 1];
-         if (lastMessage && lastMessage.role === 'ai') {
-           lastMessage.content = response;
-            if (lastMessage.thinkingProcess) {
-             lastMessage.thinkingProcess.finalThesis = response;
-           }
-         }
-         return newMessages;
-      };
-
-      setSessions(prev => prev.map(s => s.id === sessionIdToUpdate ? { ...s, messages: finalUpdater(s.messages) } : s));
-      if (activeSessionIdRef.current === sessionIdToUpdate) {
-        setCurrentMessages(finalUpdater);
-      }
-
-    } catch (err) {
-      console.error(err);
-      const errorUpdater = (messages: ChatMessageType[]): ChatMessageType[] => {
-         const newMessages = [...messages];
-         const lastMessage = newMessages[newMessages.length - 1];
-         if (lastMessage && lastMessage.role === 'ai') {
-           lastMessage.content = err instanceof Error ? err.message : 'An unknown error occurred. Please try again.';
-           lastMessage.isError = true;
-         }
-         return newMessages;
-      };
-      
-      setSessions(prev => prev.map(s => s.id === sessionIdToUpdate ? { ...s, messages: errorUpdater(s.messages) } : s));
-      if (activeSessionIdRef.current === sessionIdToUpdate) {
-        setCurrentMessages(errorUpdater);
-      }
-
-    } finally {
-      if (activeSessionIdRef.current === sessionIdToUpdate) {
-        setIsLoading(false);
-        setLoadingMessage('');
-        setActiveBrains([]);
-      }
-    }
-  }, [isLoading, activeSessionId, currentMessages]);
+  const handleMobileOverlayClick = () => {
+    setLeftSidebarOpen(false);
+    setRightSidebarOpen(false);
+  }
 
   return (
     <div className="bg-gray-900/50 text-gray-200 h-screen flex flex-col lg:flex-row overflow-hidden">
@@ -250,7 +50,7 @@ const App: React.FC = () => {
           <p className="text-xs text-gray-400 -mt-1 ml-0.5">The Hyper Thinker</p>
         </div>
         <div className="shrink-0">
-          <button onClick={handleNewSession} className="w-full flex items-center justify-center p-2 bg-gray-700/50 hover:bg-gray-700 rounded-md transition-colors text-sm font-medium">
+          <button onClick={presenter.sessionManager.newSession} className="w-full flex items-center justify-center p-2 bg-gray-700/50 hover:bg-gray-700 rounded-md transition-colors text-sm font-medium">
             <PlusIcon className="w-4 h-4 mr-2" />
             New Session
           </button>
@@ -270,7 +70,7 @@ const App: React.FC = () => {
               >
                 <span className="truncate">{session.title}</span>
                 <button 
-                  onClick={(e) => handleDeleteSession(e, session.id)}
+                  onClick={(e) => presenter.sessionManager.deleteSession(e, session.id)}
                   className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 p-1 rounded-full shrink-0"
                   aria-label={`Delete session: ${session.title}`}
                 >
@@ -293,13 +93,13 @@ const App: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile Header */}
         <header className="w-full lg:hidden flex items-center justify-between p-2 h-14 border-b border-gray-700/50 bg-gray-900/80 shrink-0">
-          <button onClick={() => setIsLeftSidebarOpen(true)} className="p-2 text-gray-400 hover:text-white">
+          <button onClick={() => setLeftSidebarOpen(true)} className="p-2 text-gray-400 hover:text-white">
             <MenuIcon className="w-6 h-6" />
           </button>
           <h1 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">
             Bibo
           </h1>
-          <button onClick={() => setIsRightSidebarOpen(true)} className="p-2 text-gray-400 hover:text-white">
+          <button onClick={() => setRightSidebarOpen(true)} className="p-2 text-gray-400 hover:text-white">
             <VitalsIcon className="w-6 h-6" />
           </button>
         </header>
@@ -329,7 +129,7 @@ const App: React.FC = () => {
         <div className="w-full border-t border-gray-700/50 bg-gray-900/40">
           <div className="max-w-4xl mx-auto p-4 md:p-6">
               <PromptInput
-                onSubmit={handleSendMessage}
+                onSubmit={presenter.chatManager.sendMessage}
                 isLoading={isLoading}
               />
           </div>
@@ -358,10 +158,7 @@ const App: React.FC = () => {
       {(isLeftSidebarOpen || isRightSidebarOpen) && (
         <div 
           className="lg:hidden fixed inset-0 bg-black/50 z-20"
-          onClick={() => {
-            setIsLeftSidebarOpen(false);
-            setIsRightSidebarOpen(false);
-          }}
+          onClick={handleMobileOverlayClick}
         ></div>
       )}
     </div>

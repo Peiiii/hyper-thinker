@@ -131,3 +131,16 @@ Analyze the user's request and provide your JSON response. Do not output any oth
 ];
 
 export const BRAINS = ALL_BRAINS.filter(b => ![BrainType.Skeptic, BrainType.Editor, BrainType.Writer, BrainType.Director, BrainType.Gatekeeper].includes(b.id));
+
+export const COMPLEX_FLOW_STAGES = [
+  "Step 1: Understanding the Question",
+  "Step 2: Brainstorming Ideas",
+  "Step 3: Building a Draft",
+  "Step 4: Reviewing & Improving",
+  "Step 5: Writing the Final Answer",
+];
+
+export const MEDIUM_FLOW_STAGES = [
+  "Step 1: Analysis",
+  "Step 2: Composition",
+];

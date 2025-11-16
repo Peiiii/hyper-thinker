@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { BRAINS } from './constants';
+import { BRAINS, COMPLEX_FLOW_STAGES, MEDIUM_FLOW_STAGES } from './constants';
 import BrainVisualizer from './components/BrainVisualizer';
 import PromptInput from './components/PromptInput';
 import ChatMessage from './components/ChatMessage';
 import { GithubIcon, PlusIcon, MenuIcon, VitalsIcon, TrashIcon } from './components/Icons';
+import ThinkingProgress from './components/ThinkingProgress';
 
 import { usePresenter } from './hooks/usePresenter';
 import { useSessionStore } from './stores/sessionStore';
@@ -13,7 +14,7 @@ import { useUiStore } from './stores/uiStore';
 const App: React.FC = () => {
   const presenter = usePresenter();
   const { sessions, activeSessionId } = useSessionStore();
-  const { currentMessages, isLoading, loadingMessage, activeBrains } = useChatStore();
+  const { currentMessages, isLoading, loadingMessage, activeBrains, flowType } = useChatStore();
   const { isLeftSidebarOpen, isRightSidebarOpen } = useUiStore();
   const { setLeftSidebarOpen, setRightSidebarOpen } = useUiStore(state => state.actions);
 
@@ -37,6 +38,12 @@ const App: React.FC = () => {
   const handleMobileOverlayClick = () => {
     setLeftSidebarOpen(false);
     setRightSidebarOpen(false);
+  }
+  
+  const getThinkingStages = () => {
+      if (flowType === 'complex') return COMPLEX_FLOW_STAGES;
+      if (flowType === 'medium') return MEDIUM_FLOW_STAGES;
+      return [];
   }
 
   return (
@@ -137,21 +144,17 @@ const App: React.FC = () => {
       </div>
 
       {/* Right Dashboard */}
-      <aside className={`fixed top-0 right-0 h-full w-80 bg-gray-900/95 backdrop-blur-sm border-l border-gray-700/50 p-4 flex flex-col z-30 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <h2 className="text-lg font-semibold mb-4 text-gray-300">Thinking Status</h2>
-        <div className="flex-grow flex items-center justify-center">
-          {isLoading ? (
-             <div className="flex flex-col items-center justify-center gap-4 text-center p-8">
-               <div className="relative flex items-center justify-center">
-                 <div className="absolute w-16 h-16 border-4 border-cyan-500/20 rounded-full"></div>
-                 <div className="absolute w-16 h-16 border-t-4 border-cyan-500 rounded-full animate-spin"></div>
-               </div>
-               <p className="text-cyan-300 font-medium text-sm mt-4 animate-pulse">{loadingMessage}</p>
-             </div>
-          ) : (
-            <BrainVisualizer brains={BRAINS} activeBrains={activeBrains} isLoading={isLoading} />
-          )}
-        </div>
+      <aside className={`fixed top-0 right-0 h-full w-80 bg-gray-900/95 backdrop-blur-sm border-l border-gray-700/50 flex flex-col z-30 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${isRightSidebarOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        {isLoading && flowType ? (
+          <ThinkingProgress stages={getThinkingStages()} currentStage={loadingMessage} />
+        ) : (
+          <>
+            <div className="p-4"><h2 className="text-lg font-semibold text-gray-300">Thinking Status</h2></div>
+            <div className="flex-grow flex items-center justify-center">
+              <BrainVisualizer brains={BRAINS} activeBrains={activeBrains} isLoading={isLoading} />
+            </div>
+          </>
+        )}
       </aside>
 
       {/* Overlay for mobile */}

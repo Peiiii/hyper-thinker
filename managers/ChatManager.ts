@@ -51,13 +51,17 @@ export class ChatManager {
     
     useChatStore.getState().actions.setLoading(true, 'Waking up Bibo...');
     useChatStore.getState().actions.setActiveBrains([]);
+    useChatStore.getState().actions.setFlowType(null);
     
-    const onUpdate = (update: { stage: string; data: any; brains?: BrainType[] }) => {
+    const onUpdate = (update: { stage: string; data: any; brains?: BrainType[], flowType?: 'complex' | 'medium' }) => {
       if (useSessionStore.getState().activeSessionId !== sessionIdToUpdate) return;
       
       useChatStore.getState().actions.setLoading(true, update.stage);
       if (update.brains) {
         useChatStore.getState().actions.setActiveBrains(update.brains);
+      }
+      if (update.flowType) {
+        useChatStore.getState().actions.setFlowType(update.flowType);
       }
       
       if (!update.data) return;

@@ -1,11 +1,11 @@
-
 import React from 'react';
-import { ThinkingProcess, BrainType, Stage } from '../types';
+import { ThinkingProcess, BrainType } from '../types';
 import { ALL_BRAINS } from '../constants';
 import MarkdownDisplay from './MarkdownDisplay';
 
 interface ThinkingProcessDisplayProps {
   process: ThinkingProcess;
+  isStreaming?: boolean;
 }
 
 const BrainCard: React.FC<{ brainId: BrainType; response: string }> = ({ brainId, response }) => {
@@ -32,14 +32,14 @@ const BrainCard: React.FC<{ brainId: BrainType; response: string }> = ({ brainId
   );
 };
 
-const TimelineItem: React.FC<{ title: string; children: React.ReactNode; isLast?: boolean }> = ({ title, children, isLast = false }) => (
+const TimelineItem: React.FC<{ title: string; children: React.ReactNode; isLast?: boolean; isOpen?: boolean }> = ({ title, children, isLast = false, isOpen = false }) => (
   <div className="relative pl-8">
     {!isLast && <div className="absolute left-3 top-3 w-px h-full bg-gray-700/50"></div>}
     <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center">
       <div className="w-3 h-3 bg-cyan-400 rounded-full"></div>
     </div>
     <div className="mb-8">
-      <details open>
+      <details open={isOpen}>
         <summary className="cursor-pointer font-bold text-base text-cyan-300 mb-2 list-none [&::-webkit-details-marker]:hidden flex justify-between items-center">
             <span>{title}</span>
             <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 transform transition-transform duration-200 details-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -55,18 +55,16 @@ const TimelineItem: React.FC<{ title: string; children: React.ReactNode; isLast?
 );
 
 
-const ThinkingProcessDisplay: React.FC<ThinkingProcessDisplayProps> = ({ process }) => {
+const ThinkingProcessDisplay: React.FC<ThinkingProcessDisplayProps> = ({ process, isStreaming = false }) => {
   const { stages } = process;
-  const hasContent = stages.length > 0;
-
-  if (!hasContent) {
+  if (stages.length === 0) {
     return null;
   }
 
   return (
-    <details className="mt-6 text-sm text-gray-400">
+    <details className="mt-6 text-sm text-gray-400" open={isStreaming}>
       <summary className="cursor-pointer font-semibold hover:text-white transition-colors">
-        View Thinking Process
+        {isStreaming ? 'Following Live Thinking Process...' : 'View Thinking Process'}
       </summary>
       <div className="mt-4 border-l-2 border-gray-800/50">
         {stages.map((stage, index) => (
@@ -74,6 +72,7 @@ const ThinkingProcessDisplay: React.FC<ThinkingProcessDisplayProps> = ({ process
             key={stage.title} 
             title={stage.title}
             isLast={index === stages.length - 1}
+            isOpen={isStreaming && index === stages.length - 1}
           >
             <div className="space-y-2">
               {stage.executions.map((exec, idx) => (

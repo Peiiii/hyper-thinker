@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useRef, useEffect, useCallback } from 'react';
 import { BRAINS, COMPLEX_FLOW_STAGES, MEDIUM_FLOW_STAGES } from './constants';
 import BrainVisualizer from './components/BrainVisualizer';
@@ -10,6 +11,7 @@ import { GithubIcon, PlusIcon, MenuIcon, VitalsIcon, TrashIcon } from './compone
 import ThinkingProgress from './components/ThinkingProgress';
 import BrainDirectory from './components/BrainDirectory';
 import FlowDirectory from './components/FlowDirectory';
+import ThinkingModeSelector from './components/ThinkingModeSelector';
 
 import { usePresenter } from './hooks/usePresenter';
 import { useSessionStore } from './stores/sessionStore';
@@ -140,6 +142,7 @@ const App: React.FC = () => {
         {/* Prompt Input Section */}
         <div className="w-full border-t border-gray-700/50 bg-gray-900/40">
           <div className="max-w-4xl mx-auto p-4 md:p-6">
+              <ThinkingModeSelector />
               <PromptInput
                 onSubmit={presenter.chatManager.sendMessage}
                 isLoading={isLoading}

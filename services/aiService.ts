@@ -2,6 +2,7 @@ import { ChatMessage, BrainType, Stage, StageExecution } from "../types";
 import { ALL_BRAINS } from "../constants";
 import { getAIProvider } from "./providers/providerFactory";
 import { AIProvider } from './providers/aiProvider';
+import { ThinkingMode } from "../stores/chatStore";
 
 const getBrain = (brainId: BrainType) => {
     const brain = ALL_BRAINS.find(b => b.id === brainId);
@@ -18,7 +19,7 @@ type OnUpdateCallback = (update: {
   stage: string;
   data: any;
   brains?: BrainType[];
-  flowType?: 'complex' | 'medium';
+  flowType?: 'complex' | 'medium' | null;
 }) => void;
 
 class AIService {
@@ -32,13 +33,29 @@ class AIService {
     public async generateResponse(
         userPrompt: string,
         history: ChatMessage[],
-        onUpdateCallback: OnUpdateCallback
+        onUpdateCallback: OnUpdateCallback,
+        thinkingMode: ThinkingMode = 'auto'
     ): Promise<string> {
         this.onUpdate = onUpdateCallback;
         const conversationHistory = formatHistory(history);
         const promptWithHistory = `PREVIOUS CONVERSATION:\n${conversationHistory}\n\nCURRENT USER PROMPT: "${userPrompt}"`;
 
-        // === STAGE 0: GATEKEEPER ===
+        if (thinkingMode === 'simple') {
+            this.onUpdate({ stage: "Generating a direct answer...", data: null, brains: [], flowType: null });
+            return this._runSimpleFlow(promptWithHistory);
+        }
+
+        if (thinkingMode === 'medium') {
+            this.onUpdate({ stage: "Prompt complexity: Medium. Starting analysis...", data: null, brains: [], flowType: 'medium' });
+            return this._runMediumFlow(userPrompt, promptWithHistory);
+        }
+        
+        if (thinkingMode === 'complex') {
+            this.onUpdate({ stage: "Prompt complexity: Complex. Initiating deep thought...", data: null, brains: [], flowType: 'complex' });
+            return this._runComplexFlow(userPrompt, promptWithHistory);
+        }
+
+        // === STAGE 0: GATEKEEPER (Auto mode) ===
         this.onUpdate({ stage: "Analyzing prompt complexity...", data: null, brains: [] });
         const gatekeeper = getBrain(BrainType.Gatekeeper);
         let decision = 'complex';
@@ -76,6 +93,20 @@ class AIService {
         this.onUpdate({ stage: "Prompt complexity: Complex. Initiating deep thought...", data: null, brains: [], flowType: 'complex' });
         return this._runComplexFlow(userPrompt, promptWithHistory);
     }
+
+    private async _runSimpleFlow(
+        promptWithHistory: string
+    ): Promise<string> {
+        const simpleWriterInstruction = `You are Bibo, The Hyper Thinker. A user has requested a simple, direct answer. Answer their question clearly and concisely without any complex analysis. Get straight to the point. Always respond in the same language as the original user prompt.`;
+        const response = await this.provider.generateText({
+            quality: 'fast',
+            systemInstruction: simpleWriterInstruction,
+            userPrompt: promptWithHistory,
+            temperature: 0.5,
+        });
+        return response;
+    }
+
 
     private async _runMediumFlow(
       userPrompt: string,
@@ -253,9 +284,10 @@ KEY INSIGHTS (Use this as the primary source material for your response):
 export const generateMultiBrainResponse = async (
   userPrompt: string,
   history: ChatMessage[],
-  onUpdate: OnUpdateCallback
+  onUpdate: OnUpdateCallback,
+  thinkingMode: ThinkingMode
 ): Promise<string> => {
   const provider = getAIProvider();
   const aiService = new AIService(provider);
-  return aiService.generateResponse(userPrompt, history, onUpdate);
+  return aiService.generateResponse(userPrompt, history, onUpdate, thinkingMode);
 };

@@ -17,7 +17,7 @@ export class ChatManager {
     }
 
     let { activeSessionId } = useSessionStore.getState();
-    const { currentMessages } = useChatStore.getState();
+    const { currentMessages, thinkingMode } = useChatStore.getState();
     const isNewSession = !activeSessionId;
 
     const userMessage: ChatMessage = {
@@ -53,14 +53,14 @@ export class ChatManager {
     useChatStore.getState().actions.setActiveBrains([]);
     useChatStore.getState().actions.setFlowType(null);
     
-    const onUpdate = (update: { stage: string; data: any; brains?: BrainType[], flowType?: 'complex' | 'medium' }) => {
+    const onUpdate = (update: { stage: string; data: any; brains?: BrainType[], flowType?: 'complex' | 'medium' | null }) => {
       if (useSessionStore.getState().activeSessionId !== sessionIdToUpdate) return;
       
       useChatStore.getState().actions.setLoading(true, update.stage);
       if (update.brains) {
         useChatStore.getState().actions.setActiveBrains(update.brains);
       }
-      if (update.flowType) {
+      if (update.flowType !== undefined) {
         useChatStore.getState().actions.setFlowType(update.flowType);
       }
       
@@ -89,7 +89,7 @@ export class ChatManager {
     };
 
     try {
-      const response = await generateMultiBrainResponse(prompt, messagesForApi, onUpdate);
+      const response = await generateMultiBrainResponse(prompt, messagesForApi, onUpdate, thinkingMode);
 
       const finalUpdater = (messages: ChatMessage[]): ChatMessage[] => {
          const newMessages = [...messages];

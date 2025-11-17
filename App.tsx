@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useRef, useEffect, useCallback } from 'react';
 import { BRAINS, COMPLEX_FLOW_STAGES, MEDIUM_FLOW_STAGES } from './constants';
 import BrainVisualizer from './components/BrainVisualizer';
@@ -26,17 +23,39 @@ const App: React.FC = () => {
   const { setLeftSidebarOpen, setRightSidebarOpen } = useUiStore(state => state.actions);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const prevActiveSessionId = useRef(activeSessionId);
 
-  const scrollToBottom = useCallback(() => {
+  const scrollToBottom = useCallback((behavior: 'smooth' | 'auto' = 'smooth') => {
     chatContainerRef.current?.scrollTo({
       top: chatContainerRef.current.scrollHeight,
-      behavior: 'smooth'
+      behavior,
     });
   }, []);
-  
+
   useEffect(() => {
-    scrollToBottom();
-  }, [currentMessages, isLoading, scrollToBottom]);
+    const chatContainer = chatContainerRef.current;
+    if (!chatContainer) return;
+
+    const didSessionChange = prevActiveSessionId.current !== activeSessionId;
+    if (didSessionChange) {
+      // When session changes, scroll to bottom instantly.
+      scrollToBottom('auto');
+      prevActiveSessionId.current = activeSessionId;
+      return;
+    }
+
+    // A new submission is when the user sends a message, which adds an empty AI message placeholder.
+    const lastMessage = currentMessages[currentMessages.length - 1];
+    const isNewSubmission = lastMessage?.role === 'ai' && !lastMessage.content && lastMessage.thinkingProcess?.stages.length === 0;
+
+    const scrollThreshold = 150; // px
+    const isAtBottom = chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight <= scrollThreshold;
+    
+    // Scroll if it's a brand new submission, or if the user is already near the bottom.
+    if (isNewSubmission || isAtBottom) {
+      scrollToBottom('smooth');
+    }
+  }, [currentMessages, activeSessionId, scrollToBottom]);
 
   const handleSelectSession = (sessionId: string) => {
     presenter.sessionManager.selectSession(sessionId);

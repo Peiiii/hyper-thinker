@@ -29,7 +29,7 @@ const FlowStep: React.FC<{ stage: FlowStageInfo }> = ({ stage }) => (
 );
 
 const FlowChart: React.FC<{ stages: FlowStageInfo[] }> = ({ stages }) => (
-  <div className="flex items-center justify-start lg:justify-center space-x-2 overflow-x-auto p-2 -m-2 pt-10">
+  <div className="flex items-center justify-start space-x-2 overflow-x-auto p-2 -m-2 pt-10">
     {stages.map((stage, index) => (
       <React.Fragment key={stage.name}>
         <FlowStep stage={stage} />

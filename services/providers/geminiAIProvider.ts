@@ -1,9 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 import { AIProvider, GenerateTextOptions, QualityTier } from "./aiProvider";
 
-const modelMap: Record<QualityTier, 'gemini-2.5-pro' | 'gemini-2.5-flash'> = {
+const modelMap: Record<QualityTier, string> = {
   fast: 'gemini-2.5-flash',
-  pro: 'gemini-2.5-pro',
+  pro: 'gemini-3-pro-preview',
 };
 
 export class GeminiAIProvider implements AIProvider {

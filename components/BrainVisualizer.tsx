@@ -15,48 +15,81 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brains, activeBrains,
     const container = containerRef.current;
     if (!container) return;
 
-    // Use ResizeObserver to dynamically update radius on container size change
     const resizeObserver = new ResizeObserver(entries => {
       for (let entry of entries) {
         const { width, height } = entry.contentRect;
-        const brainSize = 56; // w-14 or 3.5rem
-        const padding = 8; // Reduced padding to increase orbit radius
-        // Calculate radius to be half of the smaller dimension, minus half a brain and padding
+        const brainSize = 56;
+        const padding = 12;
         const newRadius = Math.max(50, (Math.min(width, height) / 2) - (brainSize / 2) - padding);
         setRadius(newRadius);
       }
     });
 
     resizeObserver.observe(container);
-
-    // Cleanup observer on component unmount
     return () => resizeObserver.disconnect();
-  }, []); // Empty dependency array means this effect runs once on mount to set up the observer
-
+  }, []);
 
   const isBrainActive = (brainId: BrainType) => isLoading && (activeBrains.includes(brainId) || activeBrains.length === 0);
 
   const getBrainStyle = (brain: Brain) => {
     const isActive = isBrainActive(brain.id);
-    const baseStyle = "w-full h-full rounded-full border-2 flex items-center justify-center backdrop-blur-sm bg-gray-800/50 transition-all duration-500 group";
+    const baseStyle = "w-full h-full rounded-full border-2 flex items-center justify-center backdrop-blur-md transition-all duration-500 group";
     
     if (isActive) {
-      return `${baseStyle} ${brain.color} shadow-lg shadow-cyan-500/50 animate-pulse`;
+      return `${baseStyle} ${brain.color} bg-gray-800/80 shadow-[0_0_15px_rgba(0,0,0,0.5)] scale-110 z-10`;
     }
-    return `${baseStyle} border-gray-600`;
+    return `${baseStyle} border-gray-700 bg-gray-900/40 opacity-70 scale-100`;
   };
 
+  // Determine active color for the core
+  const activeBrainObj = brains.find(b => activeBrains.includes(b.id));
+  // Extract tailwind color class (e.g., 'border-cyan-400') -> convert to approx CSS color for shadow if needed, 
+  // but for simplicity we'll just toggle specific classes or use inline styles if we parsed it.
+  // We'll stick to class switching for robustness.
+  
+  let coreBorderColor = 'border-gray-600';
+  let coreShadow = 'shadow-none';
+  let coreBg = 'bg-gray-800';
+
+  if (isLoading) {
+    if (activeBrainObj) {
+      // Use the active brain's color
+      coreBorderColor = activeBrainObj.color;
+      coreShadow = 'shadow-[0_0_30px_rgba(255,255,255,0.1)]'; // Generic glow, refined by border color
+      coreBg = 'bg-gray-900';
+    } else {
+      // Generic loading state
+      coreBorderColor = 'border-cyan-400';
+      coreShadow = 'shadow-[0_0_20px_rgba(34,211,238,0.3)]';
+      coreBg = 'bg-cyan-900/20';
+    }
+  }
+
   return (
-    <div ref={containerRef} className="relative w-full h-full flex items-center justify-center">
+    <div ref={containerRef} className="relative w-full h-full flex items-center justify-center overflow-visible">
+       {/* Background Grid Effect */}
+       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-gray-800/20 via-transparent to-transparent pointer-events-none"></div>
+
       {/* Central Core */}
-      <div className={`relative w-40 h-40 rounded-full flex items-center justify-center transition-all duration-500 ${isLoading ? 'bg-cyan-500/20 border-2 border-cyan-400 animate-pulse' : 'bg-gray-800 border-2 border-gray-600'}`}>
-        <div className="w-32 h-32 bg-gray-900 rounded-full animate-ping absolute opacity-50" style={{ animationDuration: '2s' }}></div>
-        <span className="text-2xl font-semibold text-cyan-300 z-10 font-mono">CORE</span>
+      <div className={`relative w-32 h-32 rounded-full flex items-center justify-center transition-all duration-700 ${coreBorderColor} border-4 ${coreShadow} ${coreBg} z-20`}>
+        {isLoading && (
+            <div className={`absolute inset-0 rounded-full border-4 ${coreBorderColor} opacity-50 animate-ping`}></div>
+        )}
+        <div className="text-center">
+            <span className={`text-xl font-bold tracking-wider ${isLoading ? 'text-white' : 'text-gray-500'} font-mono transition-colors duration-500`}>
+                {activeBrainObj ? "LINKED" : "CORE"}
+            </span>
+             {activeBrainObj && (
+                <div className="text-[10px] text-gray-300 uppercase tracking-widest mt-1 animate-pulse">Processing</div>
+             )}
+        </div>
       </div>
 
       {/* Orbiting Brains */}
       {brains.map((brain, index) => {
         const Icon = brain.icon;
+        const isActive = isBrainActive(brain.id);
+        
         return (
           <div 
             key={brain.id} 
@@ -64,8 +97,10 @@ const BrainVisualizer: React.FC<BrainVisualizerProps> = ({ brains, activeBrains,
             style={{ '--orbit-radius': `${radius}px` } as React.CSSProperties}
           >
             <div className={getBrainStyle(brain)}>
-              {Icon && <Icon className={`w-7 h-7 transition-colors duration-300 ${isBrainActive(brain.id) ? 'text-cyan-300' : 'text-gray-500 group-hover:text-white'}`} />}
-              <div className="absolute -bottom-7 px-2 py-1 text-xs bg-gray-800 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+              {Icon && <Icon className={`w-6 h-6 transition-all duration-300 ${isActive ? 'text-white scale-110' : 'text-gray-500'}`} />}
+              
+              {/* Tooltip */}
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-black/90 text-white rounded border border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 pointer-events-none">
                 {brain.name}
               </div>
             </div>
